@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
 def to_after_token(token):
     token = token.replace('\u3000', ' ')
     if token == ' ': return ''
@@ -32,9 +26,6 @@ def to_before_token(token):
         
 def to_before(tokens):
     return [ token for token in map(to_before_token, tokens) if token ]
-
-
-# In[ ]:
 
 
 if __name__ == '__main__':
