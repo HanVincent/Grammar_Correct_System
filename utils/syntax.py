@@ -22,7 +22,7 @@ wh_word = ['how', 'who', 'what', 'when', 'why', 'where', 'which', 'whether', 'wh
 reserved_words = ['someway, together', 'that']
 
 def pos_mapping(token):
-    # temp 
+    # temp -> head_mapping
     if token.lemma_ == TARGET_WORD:  
         if token.tag_ == 'VBN':      return 'VBN'
         if token.tag_ in VERBS:      return 'V'
@@ -48,3 +48,66 @@ def pos_mapping(token):
 ####### Dependency pattern #######
 # 第一層 dependency: dobj, prep, nsubj, nsubjpass, ccomp, xcomp, csubj, csubjpass, prt, acomp, oprd
 # 第二層 dependency: prep -> pobj, pcomp
+
+SUB  = ['nsubj', 'nsubjpass', 'oprd']
+OBJ  = ['dobj', 'pobj']
+CL   = ['ccomp', 'xcomp', 'acomp', 'pcomp', 'csubj', 'csubjpass']
+PREP = ['prep', 'prt']
+
+def classify_cl(token):
+    children = list(token.children)
+    if children:
+        if children[0].tag_ in WH: return 'wh-cl'
+        if children[0].tag_ == 'TO': return 'to-v'
+    return 'cl'
+    
+def head_mapping(token):
+    if token.tag_ == 'VBN':      return 'V-ed'
+    if token.tag_ == 'VBG':      return 'V-ing'
+    if token.tag_ in VERBS:      return 'V'
+    return None
+    
+def dep_mapping(token):
+    # 順序 matters
+    if token.dep_ in CL:         return classify_cl(token)    
+    
+    if token.dep_ == 'aux' and token.lemma_ == 'have': return 'have'
+    if token.lemma_ == 'be':     return 'be'
+    
+    if token.dep_ in SUB:        return 'S'
+    
+    if token.tag_ == 'VBN':      return 'v-ed'
+    if token.tag_ == 'VBG':      return 'v-ing'
+    if token.tag_ in VERBS:      return 'v'
+    
+    if token.dep_ in OBJ:        return 'O'
+    if token.dep_ in PREP:       return token.text
+    if token.tag_ == 'TO':       return 'to'
+    
+    return None
+
+
+####### Retrieve Dep pattern #######
+FIRST_REMAINS = ['aux', 'auxpass', 'dobj', 'prep', 'nsubj', 'nsubjpass', 'ccomp', 'xcomp', 'csubj', 'csubjpass', 'prt' 'acomp', 'oprd']
+SECOND_REMAINS = ['pobj', 'pcomp']
+go_deeper = ['prep']
+
+def keep_children(tk, rules):
+    return [child for child in tk.children if child.dep_ in rules]
+
+def flattern(list_2d):
+    return [el for li in list_2d for el in li]
+
+def dep_to_pattern(head_word):
+    first_order  = keep_children(head_word, FIRST_REMAINS)
+    second_order = flattern([keep_children(tk, SECOND_REMAINS) for tk in first_order if tk.dep_ in go_deeper])
+    
+    tokens = [head_word] + first_order + second_order
+    tokens.sort(key=lambda tk: tk.i)
+
+    ptns = [head_mapping(tk) if tk.i == head_word.i else dep_mapping(tk) for tk in tokens]
+    
+    ptn = ' '.join([p for p in ptns if p])
+    ngram = ' '.join([tk.text for tk in tokens])
+
+    return ptn, ngram
