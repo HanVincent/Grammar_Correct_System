@@ -1,6 +1,5 @@
 # coding: utf-8
 
-from utils.before_after import *
 from utils.syntax import *
 from collections import defaultdict, Counter
 import numpy as np
@@ -31,7 +30,7 @@ if __name__ == '__main__':
     ngrams = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: [])))
     sents = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: []))) # for debug
 
-    file_name = 'bnc'
+    file_name = 'coca' # 'bnc'
     
     for line in clean_data('../dataset/' + file_name + '.txt'):
         line = nlp(line, disable=['ner'])

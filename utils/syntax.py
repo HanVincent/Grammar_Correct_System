@@ -16,7 +16,10 @@ VERBS = ['VB', 'VBD', 'VBG', 'VBP', 'VBZ']
 NOUNS = ['NN', 'NNP', 'NNS', 'NNPS', 'DT', 'PRP', 'CD']
 ADJ   = ['JJ', 'JJR', 'JJS']
 ADV   = ['RB', 'RBR', 'RBS']
-PREP  = ['IN']
+
+# Rename
+POS_PREP  = ['IN'] # 後面重複命名
+
 WH    = ['WDT', 'WP', 'WP$', 'WRB']
 wh_word = ['how', 'who', 'what', 'when', 'why', 'where', 'which', 'whether', 'whichever', 'whoever', 'whomever', 'whatever', 'wherever', 'whenever']
 reserved_words = ['someway, together', 'that']
@@ -31,7 +34,7 @@ def pos_mapping(token):
     if token.lemma_ == 'be':         return 'be'
     
     if token.tag_ in NOUNS:          return 'n'
-    if token.tag_ in PREP:           return token.text
+    if token.tag_ in POS_PREP:       return token.text
 
     if token.tag_ in ADJ:            return 'adj'
     if token.tag_ in ADV:            return 'adv'
