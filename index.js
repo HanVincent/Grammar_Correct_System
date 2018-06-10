@@ -22,7 +22,6 @@ $(document).ready(() => {
                 'Content-Type': 'application/json'
             },
             url: "http://nlp-jedi.cs.nthu.edu.tw:1314/correct",
-            // url: "http://nlp-ultron.cs.nthu.edu.tw:1315/",
             contentType: 'application/json; charset=UTF-8',
             data: JSON.stringify({
                 'content': content
@@ -39,9 +38,9 @@ $(document).ready(() => {
 
     function showEdit(data) {
         console.log(data);
-        let { edit, suggestions = undefined } = data;
+        let { edits, suggestions = undefined } = data;
 
-        edit = edit.replace('\n', '<br>')
+        const edit = edits.join('<br>')
             .replace(rightPtn, "<span class='text-success'>$2</span>")
             .replace(wrongPtn, "<span class='text-danger'>$2</span>")
             .replace(warningPtn, "<span class='text-warning'>$2</span>");
