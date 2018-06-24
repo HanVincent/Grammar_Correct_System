@@ -1,62 +1,91 @@
 'use strict';
 
+const URL = "http://nlp-jedi.cs.nthu.edu.tw:1314";
+
+function request(endpoint, obj) {
+    return $.ajax({
+        type: "POST",
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+        },
+        url: URL + endpoint,
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify(obj),
+        success: console.info,
+        dataType: "json",
+    });
+}
+
+
 $(document).ready(() => {
     const contentBlock = $('#content-block');
     const editBlock = $('#edit-block');
+    const headline = $('#headline');
     const sugTable = $('#sug-table');
 
-    $('#btn-correct').click((e) => {
+    const editMode = $('.edit-mode');
+    $('#btn-correct').click(((e) => {
         e.preventDefault();
+        
+        editMode.toggle();
         correct();
-    });
+    }));
+    
+    $('#btn-return').click(((e) => {      
+        editMode.toggle();
+    }));
 
+    let meta;
     function correct() {
         const content = contentBlock.val().trim();
-
         if (!content) return;
 
-        $.ajax({
-            type: "POST",
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            url: "http://nlp-jedi.cs.nthu.edu.tw:1314/correct",
-            contentType: 'application/json; charset=UTF-8',
-            data: JSON.stringify({
-                'content': content
-            }),
-            dataType: "json",
-            success: showEdit,
-        });
+        request("/correct", { 'content': content })
+            .done((response) => {
+                meta = response.meta;
+                showEdit(response.edit);
+            });
     }
 
+    const rightPtn = /(\{\+(.*?)\/\/(.*?)\+\})/gm;
+    const warningPtn = /(\\\*(.*?)\/\/(.*?)\*\\)/gm;
+    const wrongPtn = /(\[-(.*?)\/\/(.*?)-\])/gm;
 
-    const rightPtn = /(\{\+(.*?)\+\})/gm;
-    const warningPtn = /(\\\*(.*?)\*\\)/gm;
-    const wrongPtn = /(\[-(.*?)-\])/gm;
-
-    function showEdit(data) {
-        console.log(data);
-        let { edits, suggestions = undefined } = data;
-
-        const edit = edits.join('<br>')
-            .replace(rightPtn, "<span class='text-success'>$2</span>")
-            .replace(wrongPtn, "<span class='text-danger'>$2</span>")
-            .replace(warningPtn, "<span class='text-warning'>$2</span>");
+    function showEdit(edit) {
+        edit = edit
+            .replace(rightPtn, "<target class='text-success' data-id='$3'>$2</target>")
+            .replace(wrongPtn, "<target class='text-danger' data-id='$3'>$2</target>")
+            .replace(warningPtn, "<target class='text-warning' data-id='$3'>$2</target>");
         editBlock.html(edit);
+    }
 
-        if (!suggestions) return;
+    let prevId = undefined;
+    editBlock.click((e) => {
+        const id = e.target.dataset.id;
+        if (id === undefined) return;
+        else if (prevId === id) return;
+        else prevId = id;
 
-        const sugList = suggestions.reduce((prev, curr, idx) => {
-            const { category, tk, bef, aft, ngram } = curr;
-            const textStyle = category === 'wrong' ? 'text-danger' : 'text-warning';
+        headline.text(meta[id].lemma + ' (' + meta[id].bef + ')');
+        request("/suggest", meta[id])
+            .done(showSuggestions);
+    });
+
+    function showSuggestions(response) {
+        let { info } = response;
+
+        if (!info) return;
+
+        const sugList = info.reduce((prev, curr) => {
+            const { ptn, percent, ngrams } = curr;
             return prev + `<tr>
-            <th scope="row" class="${textStyle}">${tk}</th>
-            <td>${bef}</td><td>${aft}</td><td>${ngram}</td>
-            </tr>`;
+            <th scope="row" rowspan=${ngrams.length}>${ptn} (${percent}%)</th><td>${ngrams[0]}</td>
+            </tr>` + ngrams.slice(1).reduce((pre, ngram) => {
+                    return pre + `<tr><td>${ngram}</td></tr>`
+                }, '');
+
         }, '')
         sugTable.html(sugList);
-
     }
 })

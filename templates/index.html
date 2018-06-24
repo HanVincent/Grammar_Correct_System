@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>HEAD</title>
+    <title>Corrections System based on Inter-word Dependency</title>
     <meta charset='utf8'>
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -13,6 +13,12 @@
         crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
         crossorigin="anonymous"></script>
+    
+    <style>
+        target {
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -23,7 +29,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 <li class="nav-item active">
                     <a class="nav-link" href="#">Home
                         <span class="sr-only">(current)</span>
@@ -36,32 +42,38 @@
         </div>
     </nav>
 
+    
     <div class="p-3"></div>
 
-    <section class="row m-4 h-25">
-        <form class="w-50 d-inline-block">
-            <div class="form-group">
-                <textarea id="content-block" class="h-50 form-control" aria-label="content">I want to discuss about my life. I rely my ability. I am able to do something. I love to apple. I love to do something.</textarea>
+
+    <section class="row m-4">
+        <div class="pl-4 col">
+            <form class="edit-mode">
+                <div class="form-group">
+                    <textarea id="content-block" class="h-50 form-control" aria-label="content">I want to discuss about my life. I rely my ability. I am able to do something. I love to apple. I love to do something.</textarea>
+                </div>
+                <button id="btn-correct" class="btn btn-primary">Submit</button>
+            </form>
+            <div class="edit-mode" style="display: none">
+                <button id="btn-return" class="btn btn-outline-primary btn-sm">Back</button>
+                <div id="edit-block" class="mt-2"></div>
             </div>
-            <button type="submit" id="btn-correct" class="btn btn-primary">Submit</button>
-        </form>
+        </div>
 
-        <div id="edit-block" class="pl-4 w-50"></div>
-    </section>
-
-    <h3 class="m-4">Suggestions</h3>
-    <section class="row m-4 h-25">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">Word</th>
-                    <th scope="col">Before</th>
-                    <th scope="col">Recommend</th>
-                    <th scope="col">N-gram</th>
-                </tr>
-            </thead>
-            <tbody id="sug-table"></tbody>
-        </table>
+        <div class="col">
+            <h5 class="text-center" id="headline">Word (Pattern)</h5>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Word</th>
+                        <!-- <th scope="col">Before</th> -->
+                        <!-- <th scope="col">Recommend</th> -->
+                        <th scope="col">N-gram</th>
+                    </tr>
+                </thead>
+                <tbody id="sug-table"></tbody>
+            </table>
+        </div>
     </section>
 
     <script src="{{url_for('static', filename='js/index.js')}}"></script>

@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[16]:
 
 
 from collections import defaultdict, Counter
@@ -12,10 +12,10 @@ from utils.syntax import *
 from utils.counts import *
 import numpy as np
 import spacy
-import json
+import json, math
 
 
-# In[2]:
+# In[17]:
 
 
 nlp = spacy.load('en_core_web_lg') # ('en')
@@ -69,7 +69,7 @@ for headword in patterns:
             norm_sents[headword][dep][normalize(ptn)].extend(sents[headword][dep][ptn])
 
 
-# In[94]:
+# In[54]:
 
 
 # 使用 ptn / first_ptn 百分比
@@ -87,31 +87,34 @@ def categorize(ratio):
     
     
 def get_template(ratio):
-    if ratio > CONFIDENT:     return '{{+{}+}}'
-    elif ratio < UNCONFIDENT: return '[-{}-]'
-    else:                     return '\\*{}*\\'
+    if ratio > CONFIDENT:     return '{{+{}//{}+}}'
+    elif ratio < UNCONFIDENT: return '[-{}//{}-]'
+    else:                     return '\\*{}//{}*\\'
     
     
-def suggest_ptn(bad_ptn, ptns):
-    ptns = truncate_k(ptns, ptns[bad_ptn]) if bad_ptn in ptns else ptns # Optimize if exist
-
+def suggest_ptns(bad_ptn, all_ptns, k=5):
+    ptns = truncate_k(all_ptns, all_ptns[bad_ptn]) if bad_ptn in all_ptns else all_ptns # Optimize if exist
+    
+    if len(ptns) == 0:
+        return [ptn for ptn, ctn in all_ptns.most_common(k)]
+        
     sim_ptns = sorted(ptns, key=ptns.get, reverse=True)
     sim_ptns = sorted(sim_ptns, key=lambda ptn: edit_distance(bad_ptn.split(' '), ptn.split(' ')))
     
-#     print(sim_ptns[:5])
+#     print(sim_ptns[:k])
     
-    return sim_ptns[0]
+    return sim_ptns[:k]
 
 
-def suggest_ngram(ngram, ngrams):
+def suggest_ngrams(ngram, ngrams):
     ngrams = filter(lambda ng: '@@@' not in ng, set(ngrams)) # workaround
     ngram = ngram.lower()
 
     sim_ngrams = sorted(ngrams, key=lambda ng: edit_distance(ngram.split(' '), ng.split(' ')))
     
-#     print(sim_ngrams[:5])
+#     print(sim_ngrams[:3])
     
-    return sim_ngrams[0]
+    return sim_ngrams[:3]
 
 
 def edit_ngram(tk, ngram_list, old_ptn, new_ptn):
@@ -139,68 +142,63 @@ def edit_sentence():
     pass
 
 
-def correct(line):
+def edit(line):
     line = nlp(line)
     
-    edits, suggestions, edit_line = [], [], [tk.text for tk in line]
-    for tk in line:
+    edits, meta = [], {}
+    for i, tk in enumerate(line):
         if tk.tag_ in POS['VERBS']:
-            # 以下拆 def ?
             ptns, ngrams = dep_to_ptns_ngrams(tk)
             ptn, ngram = ' '.join(ptns), ' '.join([ng.text for ng in ngrams])
-            # print("ptn: {}, ngram: {}".format(ptn, ngram))
             
             norm_ptn = normalize(ptn)
-            ptns = norm_patterns[tk.lemma_][tk.dep_]
-            # high_ptns  = get_high_freq(ptns)
-            
+            ptns = norm_patterns[tk.lemma_][tk.dep_]            
             ratio = predict_ratio(norm_ptn, ptns)
-            # print(tk.text, tk.dep_, norm_ptn, ratio)
         
-            if ratio < CONFIDENT:
-                top_ptn = suggest_ptn(norm_ptn, ptns)
-                top_ngram = suggest_ngram(ngram, norm_ngrams[tk.lemma_][tk.dep_][top_ptn])
-                new_ngram = edit_ngram(tk, ngrams, norm_ptn, top_ptn)
-            
-                suggestions.append({
-                    'category': categorize(ratio),
-                    'tk': tk.text,
-                    'bef': norm_ptn,
-                    'aft': top_ptn,
-                    'ngram': new_ngram
-                    # 'ngram': top_ngram
-                })
+            meta[str(i)]={
+                'lemma': tk.lemma_,
+                'dep': tk.dep_,
+                'bef': norm_ptn,
+                'ngram': ngram
+            }
 
-            edits.append(get_template(ratio).format(tk.text))
+            edits.append(get_template(ratio).format(tk.text, i))
         else:
             edits.append(tk.text)
    
-    return ' '.join(edits), suggestions
-
-def main_process(content):
-    edit_lines, suggestions = [], []
-
-    for line in content.split('\n'):
-        edit, sug = correct(line)
-        
-        edit_lines.append(edit)
-        suggestions.extend(sug)
-
-    return edit_lines, suggestions
- 
+    return ' '.join(edits), meta
 
 
-# In[97]:
+def suggest_info(data):
+    info = []
+    ptns = suggest_ptns(data['bef'], norm_patterns[data['lemma']][data['dep']])
+    
+    total = sum(norm_patterns[data['lemma']][data['dep']].values())
+    for ptn in ptns:
+        ngrams = suggest_ngrams(data['ngram'], norm_ngrams[data['lemma']][data['dep']][ptn])
+#         ngrams = Counter(norm_ngrams[data['lemma']][data['dep']][ptn]).most_common(3)
+        per = norm_patterns[data['lemma']][data['dep']][ptn] / total
+    
+        if per < 0.01: continue
+    
+        info.append({'ptn': ptn, 'percent': math.floor(per*100),'ngrams': ngrams})
+    return info
+
+
+# In[55]:
 
 
 if __name__ == '__main__':
     from pprint import pprint
-#     user_input = '''I want to discuss exaggerately about my life. I rely my ability.'''
-    user_input = 'can you rely heavily in my life in last July without hestitation?'
-    pprint(main_process(user_input))
+    user_input = '''I like you. \n I want to discuss exaggerately about my life. I rely my ability.'''
+#     user_input = 'can you rely heavily in my life in last July without hestitation?'
+    print(edit(user_input))
+    print()
+    print(suggest_info({'tk': 'discuss', 'ngram': 'to discuss about life', 'bef': 'V about O', 'dep': 'xcomp', 'lemma': 'discuss'}))
+    print(suggest_info({'bef': 'V to-v', 'dep': 'ROOT', 'ngram': 'I want discuss', 'lemma': 'want'}))
 
 
-# In[1]:
+# In[ ]:
 
 
 #!/usr/bin/env python
@@ -220,22 +218,31 @@ def index():
     return render_template('index.html')
 
 
-# post /correct data: {content :}
-@app.route('/correct' , methods=['POST'])
-def start_correct():
+# post /correct data: { content: str }
+@app.route('/correct', methods=['POST'])
+def correct():
     request_data = request.get_json()
     if not request_data: return jsonify({'edit': 'Should not be empty'})
     
     content = request_data['content']
     print(content)
+        
+    edit_line, meta = edit(content)
+
+    return jsonify({'edit': edit_line, 'meta': meta})
+
+
+# post /suggest data: {'tk': 'want', 'bef': 'V to-v', 'dep': 'ROOT', 'lemma': 'want'}
+@app.route('/suggest', methods=['POST'])
+def suggest():
+    request_data = request.get_json()
+    if not request_data: return jsonify({'edit': 'Should not be empty'})
     
-    edits, suggestions = main_process(content)
+    print(request_data)
     
-    return jsonify({
-        'edits': edits,
-        'suggestions': suggestions
-    })
+    return jsonify({'info': suggest_info(request_data)})
+
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=1314)
+    app.run(host='0.0.0.0', port=1315)
 
