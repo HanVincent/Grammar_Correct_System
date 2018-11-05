@@ -1,5 +1,4 @@
-**/*.json
-**/*.txt
+static/data/*.json
 
 .ipynb_checkpoints/
 __pycache__/

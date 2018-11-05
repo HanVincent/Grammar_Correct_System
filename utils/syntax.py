@@ -9,12 +9,12 @@ WH_WORDS = ['how', 'who', 'what', 'when', 'why', 'where', 'which', 'whether', 'w
 RESERVED_WORDS = ['someway, together', 'that']
 
 POS = {
-    'VERBS': ['VB', 'VBD', 'VBG', 'VBP', 'VBZ'], # 'VBN'
-    'NOUNS': ['NN', 'NNP', 'NNS', 'NNPS', 'DT', 'PRP', 'CD'],
-    'ADJ':   ['JJ', 'JJR', 'JJS'],
-    'ADV':   ['RB', 'RBR', 'RBS'],
-    'PREP':  ['IN'],
-    'WH':    ['WDT', 'WP', 'WP$', 'WRB']
+    'VERB': ['VB', 'VBD', 'VBG', 'VBP', 'VBZ'], # 'VBN'
+    'NOUN': ['NN', 'NNP', 'NNS', 'NNPS', 'DT', 'PRP', 'CD'],
+    'ADJ':  ['JJ', 'JJR', 'JJS'],
+    'ADV':  ['RB', 'RBR', 'RBS'],
+    'PREP': ['IN'],
+    'WH':   ['WDT', 'WP', 'WP$', 'WRB']
 }
 
 DEP = {
@@ -55,9 +55,9 @@ def classify_cl(token):
     
     
 def head_mapping(token):
-    if token.tag_ == 'VBN':         return 'V-ed'
-    if token.tag_ == 'VBG':         return 'V-ing'
-    if token.tag_ in POS['VERBS']:  return 'V'
+    if token.tag_ == 'VBN':        return 'V-ed'
+    if token.tag_ == 'VBG':        return 'V-ing'
+    if token.tag_ in POS['VERB']:  return 'V'
     
     return None
     
@@ -71,12 +71,12 @@ def dep_mapping(token):
     
     if token.tag_ == 'VBN':             return 'v-ed'
     if token.tag_ == 'VBG':             return 'v-ing'
-    if token.tag_ in POS['VERBS']:      return 'v'
+    if token.tag_ in POS['VERB']:       return 'v'
 
     if token.dep_ in DEP['SUB']:        return 'S'
     if token.dep_ in DEP['OBJ']:        return 'O'
     if token.dep_ in DEP['PREP']:       return token.text
-    if token.tag_ == 'TO':       return 'to'
+    if token.tag_ == 'TO':              return 'to'
     
     return None
 
@@ -104,14 +104,40 @@ def dep_to_ptns_ngrams(head_word):
 
     ptns = [head_mapping(tk) if tk.i == head_word.i else dep_mapping(tk) for tk in tokens]
     
-    # ptn = ' '.join([p for p in ptns if p]) # Avoid None
-    # ngram = ' '.join([tk.text for tk in tokens])
-    
-    ptns = [p for p in ptns if p]
-    ngrams = [tk for tk in tokens]
+    ptns = [p for p in ptns if p] # Avoid None
+    ngrams = [tk.text for tk in tokens]
 
     return ptns, ngrams
 
+
+### TODO: refactor and modify algo
+def normalize(ptn):
+    if 'be V-ed' in ptn: print(ptn) # Don't care passive usage
+    
+    try:
+        ptn = 'V' + ptn.split('V')[1] # remove tokens before head-word
+    except:
+        ptn = 'be' + ptn.split('be')[1] # remove tokens before head-word
+        
+    ptn = ' '.join(ptn.split(' ')[:4]) # max lenght: 4-gram
+    
+    ptn = ptn.replace('V-ing', 'V').replace('V-ed', 'V') # have v-ed, be v-ing -> V-root except passive 
+    # ptn = ptn.replace('wh-cl', 'O').replace('cl', 'O') # cl / wh-cl -> O
+    # ptn = ptn.replace('to-v', 'ADJ').replace('v-ing', 'ADJ') # v-ing / to-v -> ?
+        
+    # if / which / who / whom
+    # TODO: Modify condition?
+    ptn = ptn.split(' ')
+    if len(ptn) > 2:
+        if ptn[1] in PREPOSITIONS: # V prep. _
+            ptn = ptn[:3]
+        elif ptn[1] != 'O': # V before O
+            ptn = ptn[:1]
+        elif ptn[2] in PREPOSITIONS: # V O prep. O
+            ptn = ptn[:4]
+        else: # V O O / V O not_prep
+            ptn = ptn[:2]
+    return ' '.join(ptn)
 
 
 ####### N-gram pattern #######
