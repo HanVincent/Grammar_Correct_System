@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from utils.syntax import *
 from utils.counts import *
+# from utils.parse import parse
 
 
 # In[ ]:
@@ -19,7 +20,7 @@ class DotDict(dict):
     def __getattr__(self, name):
         return self[name]
     
-def parse(block):
+def construct(block):
     lines = [line for line in block.split('\n') if line]
     parsed = [ DotDict() for _ in range(len(lines)) ]
 
@@ -44,18 +45,13 @@ def parse(block):
 # In[ ]:
 
 
-# block = '''0	In	in	prep	IN	ADP	5	2
-# 1	the	the	det	DT	DET	2	
-# 2	Treatise	treatise	pobj	NNP	PROPN	0	1
-# 3	,	,	punct	,	PUNCT	5	
-# 4	Hume	hume	nsubj	NNP	PROPN	5	
-# 5	discusses	discuss	ROOT	VBZ	VERB	5	0,3,4,8,9
-# 6	just	just	advmod	RB	ADV	8	
-# 7	this	this	det	DT	DET	8	
-# 8	point	point	dobj	NN	NOUN	5	6,7
-# 9	.	.	punct	.	PUNCT	5	'''
+# block = '''0	we	-PRON-	nsubj	PRP	PRON	1	
+# 1	want	want	ROOT	VBP	VERB	1	0,3
+# 2	to	to	aux	TO	PART	3	
+# 3	discuss	discuss	xcomp	VB	VERB	1	2,4
+# 4	something	something	dobj	NN	NOUN	3	'''
 
-# entry = parse(block)
+# entry = construct(block)
 
 
 # In[ ]:
@@ -86,7 +82,7 @@ def retrieve_dep(entry):
         if token.tag_ in POS['VERB']: # or tag == VERB
             ptn_tks, ngram_tks = dep_to_ptns_ngrams(token)
             ptn, ngram = ' '.join(ptn_tks), ' '.join(ngram_tks)
-            
+
             patterns[token.lemma_][token.dep_][ptn] += 1
             ngrams[token.lemma_][token.dep_][ptn].append(ngram)
             sents[token.lemma_][token.dep_][ptn].append((sent, sent_score))
@@ -101,7 +97,7 @@ def retrieve_dep(entry):
 
 
 for entry in tqdm(contents):
-    retrieve_dep(parse(entry))
+    retrieve_dep(construct(entry))
 
 
 # ### Minimize Ngrams and Sentences
@@ -130,6 +126,7 @@ for word in patterns:
 
 
 # ### Save in json file
+# #### TODO: store in sqlite?
 
 # In[ ]:
 

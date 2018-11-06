@@ -50,7 +50,7 @@ def classify_cl(token):
     children = list(token.children)
     if children:
         if children[0].tag_ in POS['WH']: return 'wh-cl'
-        if children[0].tag_ == 'TO':      return 'to-v'
+        if children[0].tag_ == 'TO':      return 'v' # to-v
     return 'cl'
     
     
@@ -83,8 +83,8 @@ def dep_mapping(token):
 
 ####### Retrieve Dep pattern #######
 FIRST_REMAINS = ['aux', 'auxpass', 'dobj', 'prep', 'nsubj', 'nsubjpass', 'ccomp', 'xcomp', 'csubj', 'csubjpass', 'prt' 'acomp', 'oprd']
-SECOND_REMAINS = ['pobj', 'pcomp']
-go_deeper = ['prep']
+SECOND_REMAINS = ['pobj', 'pcomp', 'aux']
+go_deeper = ['prep', 'xcomp']
 
 
 def keep_children(tk, rules):
