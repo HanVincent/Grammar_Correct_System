@@ -1,4 +1,7 @@
+
+venv/
 static/data/*.json
+static/data/*.db
 
 .ipynb_checkpoints/
 __pycache__/
