@@ -4,6 +4,9 @@ Click==7.0
 cymem==2.0.2
 cytoolz==0.9.0.1
 dill==0.2.8.2
+en-core-web-lg==2.0.0
+en-core-web-md==2.0.0
+en-core-web-sm==2.0.0
 Flask==1.0.2
 Flask-Cors==3.0.6
 idna==2.7

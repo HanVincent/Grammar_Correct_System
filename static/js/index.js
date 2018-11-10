@@ -1,7 +1,5 @@
 'use strict';
 
-const URL = "http://nlp-jedi.cs.nthu.edu.tw:1314";
-
 function request(endpoint, obj) {
     return $.ajax({
         type: "POST",
@@ -9,7 +7,7 @@ function request(endpoint, obj) {
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json'
         },
-        url: URL + endpoint,
+        url: endpoint,
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify(obj),
         success: console.info,

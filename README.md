@@ -2,9 +2,12 @@
 
 Grammar correct system for English articles. The system examines all the verbs in an article and check the usage.
 
-## Getting Started
+## Detail
 
-These instructions will get you a copy of the project up and running on your local machine for development. 
+* Parse data
+* Set up some rules
+* Count the patterns
+* Correct articles based on statistics
 
 ### Prerequisites
 
@@ -42,9 +45,3 @@ python3 correct_pattern to run the system
 * SpaCy
 * Flask
 * SQLite
-
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-

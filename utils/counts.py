@@ -25,7 +25,7 @@ def get_high_freq(counts):
 
 
 def truncate_k(counts, k=10):
-    return dict([(ptn, count) for ptn, count in counts.items() if count > k])
+    return { ptn: counts[ptn] for ptn in counts if counts[ptn] > k }
 
 
 def sort_dict(counts):
