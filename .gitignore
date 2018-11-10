@@ -1,4 +1,4 @@
-
+*.tar
 venv/
 static/data/*.json
 static/data/*.db
