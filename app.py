@@ -17,7 +17,10 @@ import json, math
 # In[3]:
 
 
-nlp = spacy.load('en_core_web_lg') # ('en')
+import en_core_web_lg
+nlp = en_core_web_lg.load()
+
+# nlp = spacy.load('en_core_web_lg') # ('en')
 
 
 # In[4]:
