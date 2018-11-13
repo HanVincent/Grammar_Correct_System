@@ -14,13 +14,10 @@ import spacy
 import json, math
 
 
-# In[3]:
+# In[1]:
 
 
-import en_core_web_lg
-nlp = en_core_web_lg.load()
-
-# nlp = spacy.load('en_core_web_lg') # ('en')
+nlp = spacy.load('en_core_web_lg') # ('en')
 
 
 # In[4]:
