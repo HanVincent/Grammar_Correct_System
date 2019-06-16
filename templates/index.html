@@ -14,58 +14,65 @@
     <title>Corrections System based on Inter-word Dependency</title>
     <meta charset='utf8'>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" />
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
-    
-    <style>
-        target {
-            cursor: pointer;
-        }
-    </style>
-    
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{{url_for('static', filename='css/index.css')}}"/>
     
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-<!--         <a class="navbar-brand" href="#">Navbar</a> -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-            aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Home
-                        <span class="sr-only">(current)</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Features</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <nav class="navbar navbar-expand-sm navbar-light" style="background-color: #e3f2fd;">
+      <a class="navbar-brand" href="/">GEC</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          
+        <ul class="navbar-nav">
+          <li class="nav-item">
+<!--               <a class="nav-link" href="#">Feature</a> -->
+              <a id="btn-feature" class="hoverable nav-link" data-toggle="modal" data-target="#feature-modal">Feature
+        </a>
+            
+          </li>
+        </ul>
+          
+      </div>
+    </nav>
     
     <div class="p-3"></div>
 
-
     <section class="row m-4">
         <div class="pl-4 col">
+            
             <form class="edit-mode">
+                <h5>Input your article:</h5>
                 <div class="form-group">
                     <textarea id="content-block" class="h-50 form-control" aria-label="content">I want to discuss about my life. I rely my ability. I am able to do something. I love to apple. I love to do something.</textarea>
                 </div>
-                <button id="btn-correct" class="btn btn-primary">Submit</button>
+               
+                <div class="row justify-content-center">
+                    <button id="btn-correct" class="btn btn-primary ml-1">
+                        <span class="mr-1 font-weight-lighter">Correct!</span>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+
             </form>
+            
             <div class="edit-mode" style="display: none">
-                <button id="btn-return" class="btn btn-outline-primary btn-sm">Back</button>
-                <div id="edit-block" class="mt-2"></div>
+                <h5>Result:</h5>
+                <div id="edit-block" class="form-group mt-2"></div>
+                
+                <div class="row justify-content-center">
+                    <button id="btn-return" class="btn btn-outline-primary ml-1">
+                        <span class="mr-1 font-weight-lighter">Back!</span>
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
             </div>
+            
         </div>
 
         <div class="col">
@@ -83,6 +90,45 @@
             </table>
         </div>
     </section>
+    
+    <!-- Feature Modal -->
+    <div class="modal fade" id="feature-modal" tabindex="-1" role="dialog" aria-labelledby="feature-modal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="feature-modal-title">Features</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+            
+          <div class="modal-body">
+              <ul>
+                  <li>Detect the usage of verbs in a given article.</li>
+                  <ul>
+                      <li>Green: Correct</li>
+                      <li>Yellow: Not sure</li>
+                      <li>Red: Wrong</li>
+                  </ul>
+                  <li>Display the correct pattern of verbs.</li>
+              </ul>
+          </div>
+            
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+            
+        </div>
+      </div>
+    </div>
+    
+    <!-- loading overlay -->
+    <div id="overlay-suggest" class="overlay fa-2x d-none"><i id="loading" class="fas fa-spinner fa-spin"></i></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://use.fontawesome.com/releases/v5.0.0/js/solid.js"></script>
+    <script src="https://use.fontawesome.com/releases/v5.0.0/js/fontawesome.js"></script>
 
     <script src="{{url_for('static', filename='js/index.js')}}"></script>
 </body>

@@ -1,5 +1,7 @@
 'use strict';
 
+const overlay = $('#overlay-suggest');
+
 function request(endpoint, obj) {
     return $.ajax({
         type: "POST",
@@ -10,7 +12,13 @@ function request(endpoint, obj) {
         url: endpoint,
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify(obj),
-        success: console.info,
+        beforeSend: function() {
+            overlay.removeClass('d-none'); 
+        },
+        success: function(res) {
+            console.info(res);
+            overlay.addClass('d-none');
+        },
         dataType: "json",
     });
 }
