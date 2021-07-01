@@ -5,9 +5,9 @@ class ParsedEntry(list):
 
     def __init__(self, entry):
         parts = [part for part in entry.strip().split('\t') if part]
-        original_sent, tokens = parts[0], parts[1:]
+        origin_sent, tokens = parts[0], parts[1:]
 
-        self.original_sent = original_sent
+        self.origin_sent = origin_sent
         self.extend([DotDict(token, self) for token in tokens])
 
 

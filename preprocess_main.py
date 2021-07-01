@@ -1,56 +1,79 @@
 
 from Models.MongoDBClient import MongoDBClient
+from Models.Parser import Parser
 from Objects.ParsedEntry import ParsedEntry
 from Models.DependencyExtractor import DependencyExtractor
 from tqdm import tqdm
+from collections import Counter
 import gzip
+import datetime
 
 
 class DataCleaner:
     def __init__(self):
         pass
 
-    def is_valid_data(self, parsed_entry):
+    def is_valid_data(self, parsed_entry, sent):
         if len(parsed_entry) > 24:  # skip long sentence
             return False
-        if '@@@' in parsed_entry.original_sent:
+        if '@@@' in sent:
             return False
-        if '#' in parsed_entry.original_sent:
+        if '#' in sent:
             return False
 
         return True
 
 
 def main():
+    parser = Parser()
     data_cleaner = DataCleaner()
     dependency_extractor = DependencyExtractor()
     mongo_client = MongoDBClient()
     mongo_client.create_indexes()
-
-    with gzip.open('/Users/whan/Data/bnc.parse.txt.gz', 'rt', encoding='utf8') as fs:
-        documents = []
+    # filename = 'bnc.parse.txt.gz'
+    filename = 'coca.txt.gz'
+    with gzip.open('/Users/whan/Data/' + filename, 'rt', encoding='utf8') as fs:
+        pattern_counter = Counter()
+        ngram_set = set()
         for i, entry in enumerate(tqdm(fs), 1):
-            parsed_entry = ParsedEntry(entry)
-            if data_cleaner.is_valid_data(parsed_entry):
-                sent_score = dependency_extractor.score(parsed_entry)
+            # parsed_entry = ParsedEntry(entry)
+            parsed_entry = parser.parse(entry.strip())
+            # sent = parsed_entry.origin_sent
+            sent = entry 
+            if data_cleaner.is_valid_data(parsed_entry, sent):
+                sent_score = round(dependency_extractor.score(parsed_entry), 2)
                 if sent_score < 0.6:
                     continue
 
-                patterns = map(
-                    lambda token: dependency_extractor.process(token), parsed_entry)
-                patterns = filter(lambda pattern: pattern,
-                                  patterns)  # filter None
-                for pattern in patterns:
-                    pattern['sent'] = parsed_entry.original_sent
-                    pattern['sent_score'] = sent_score
+                for token in parsed_entry:
+                    info = dependency_extractor.process(token)
+                    if info:
+                        key = f'{token.lemma_}|{token.dep_}'
+                        pattern_counter[(key, info['norm_pattern'])] += 1
+                        ngram_key = f'{key}|{info["norm_pattern"]}'
+                        ngram = f'{info["ngram"]}|{info["pattern"]}'
+                        ngram_set.add((ngram_key, ngram, sent, sent_score))
 
-                documents.extend(patterns)
+            if i % 50000 == 0:
+                print(i, "Uploading to MongoDB.")
 
-            if i % 20000 == 0:
-                mongo_client.add_documents(documents)
-                documents = []
+                print("Start to update pattern counts in bulk.")
+                start_time = datetime.datetime.now()
+                mongo_client.add_patterns(pattern_counter)
+                pattern_counter = Counter()
+                end_time = datetime.datetime.now()
+                print("End update pattern counts in bulk with elapsed seconds: " +
+                      str((end_time-start_time).total_seconds()))
 
-            if i == 5000000:
+                print("Start to insert ngram in bulk.")
+                start_time = datetime.datetime.now()
+                mongo_client.add_ngrams(ngram_set)
+                ngram_set.clear()
+                end_time = datetime.datetime.now()
+                print("End insert ngram in bulk with elapsed seconds: " +
+                      str((end_time-start_time).total_seconds()))
+
+            if i == 20000000:
                 break
 
 

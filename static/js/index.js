@@ -12,10 +12,10 @@ function request(endpoint, obj) {
         url: endpoint,
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify(obj),
-        beforeSend: function() {
-            overlay.removeClass('d-none'); 
+        beforeSend: function () {
+            overlay.removeClass('d-none');
         },
-        success: function(res) {
+        success: function (res) {
             console.info(res);
             overlay.addClass('d-none');
         },
@@ -33,12 +33,12 @@ $(document).ready(() => {
     const editMode = $('.edit-mode');
     $('#btn-correct').click(((e) => {
         e.preventDefault();
-        
+
         editMode.toggle();
         correct();
     }));
-    
-    $('#btn-return').click(((e) => {      
+
+    $('#btn-return').click(((e) => {
         editMode.toggle();
     }));
 
@@ -73,25 +73,24 @@ $(document).ready(() => {
         else if (prevId === id) return;
         else prevId = id;
 
-        headline.text(meta[id].lemma + ' (' + meta[id].bef + ')');
-        request("/suggest", meta[id])
-            .done(showSuggestions);
+        const [token, dep] = meta[id].key.split('|');
+        headline.text(`${token} | ${meta[id].norm_pattern} | ${meta[id].ngram}`);
+        request("/suggest", meta[id]).done(showSuggestions);
     });
 
     function showSuggestions(response) {
-        let { info } = response;
+        let { suggests } = response;
 
-        if (!info) return;
+        if (!suggests) return;
 
-        const sugList = info.reduce((prev, curr) => {
-            const { ptn, percent, ngrams } = curr;
-            return prev + `<tr>
-            <th scope="row" rowspan=${ngrams.length}>${ptn} (${percent}%)</th><td>${ngrams[0]}</td>
-            </tr>` + ngrams.slice(1).reduce((pre, ngram) => {
-                    return pre + `<tr><td>${ngram}</td></tr>`
-                }, '');
-
+        const suggestsList = suggests.reduce((prev, curr) => {
+            const { norm_pattern, percent, ngrams } = curr;
+            return prev + `
+            <tr>
+                <th scope="row" rowspan=${ngrams.length}>${norm_pattern} (${percent}%)</th>
+                <td>${ngrams[0]}</td>
+            </tr>` + ngrams.slice(1).reduce((pre, ngram) => pre + `<tr><td>${ngram}</td></tr>`, '');
         }, '')
-        sugTable.html(sugList);
+        sugTable.html(suggestsList);
     }
 })

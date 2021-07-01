@@ -37,7 +37,7 @@ def suggest():
 
     print(request_data)
 
-    return jsonify({'info': suggester.process(request_data)})
+    return jsonify({'suggests': suggester.process(request_data)})
 
 
 def init():

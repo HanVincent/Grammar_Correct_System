@@ -9,23 +9,19 @@ class DependencyExtractor:
         self.verb_pattern_extractor = VerbPatternExtractor()
 
     # TODO: consider noun chunk could be better
-    def process(self, token, append_index=False):
+    def process(self, token):
         if self.verb_pattern_extractor.is_processable(token.tag_):
             try:
                 pattern, ngram = self.verb_pattern_extractor.extract_pattern(
                     token)
+                norm_pattern = self.verb_pattern_extractor.normalize(pattern)
 
                 # sent can be sorted by sent_score
                 info = {
-                    'headword': token.lemma_,  # TODO: can we remove?
-                    'dependency': token.dep_,  # TODO: can we remove?
-                    'norm_pattern': self.verb_pattern_extractor.normalize(pattern),
+                    'norm_pattern': norm_pattern,
                     'pattern': pattern,
                     'ngram': ngram
                 }
-
-                if append_index:
-                    info['i'] = token.i
 
                 return info
             except ValueError as e:

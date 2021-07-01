@@ -25,45 +25,32 @@ class Suggester:
     def _edit_sentence(self):
         pass
 
-    def process(self, info, k_patterns=5):
+    def process(self, query, k_patterns=5):
         '''{
-            'lemma': tk.lemma_,
-            'dep': tk.dep_,
-            'bef': norm_ptn,
+            'key': tk.lemma_|tk.dep_,
+            'norm_pattern': norm_ptn,
             'ngram': ngram
         }'''
-        try:
-            pattern_count = self.mongodb_client.get_pattern_counts(
-                query={
-                    'headword': info['lemma'], 'dependency': info['dep'], 'norm_pattern': info['bef']},
-                groupby=None, limit=1).next()['count']
-        except StopIteration:
-            pattern_count = 0
-
-        top_k_patterns_cursor = self.mongodb_client.get_pattern_counts(
-            query={'headword': info['lemma'], 'dependency': info['dep']},
-            groupby={"norm_pattern": "$norm_pattern"},
-            limit=k_patterns)
-        # pattern_candidates = self._suggest_patterns(info['bef'], all_patterns_count_cursor, k=k_patterns)
-
-        try:
-            pattern_total_count = self.mongodb_client.get_pattern_counts(
-                query={'headword': info['lemma'], 'dependency': info['dep']}).next()['count']
-        except StopIteration:
-            pattern_total_count = 0
+        # pattern_count = self.mongodb_client.get_pattern_count(key, info["bef"])
+        total_count = self.mongodb_client.get_total_counts(query['key'])
+        top_k_patterns = self.mongodb_client.get_top_pattern_counts(
+            query['key'], k_patterns)
 
         suggestions = []
-        for pattern in top_k_patterns_cursor:
-            ngram_tks = info['ngram'].split(' ')
-            ngram_candidates = self._suggest_ngrams(
-                ngram_tks, pattern['ngrams'])
+        ngram_tks = query['ngram'].split(' ')
+        for each in top_k_patterns:
+            ngram_key = f'{query["key"]}|{each["norm_pattern"]}'
+            ngrams = [doc['ngram'].split(
+                '|')[0] for doc in self.mongodb_client.get_ngrams(ngram_key)]
+            ngram_candidates = self._suggest_ngrams(ngram_tks, ngrams)
 
-            percentage = pattern['count'] / pattern_total_count
-            if percentage < 0.01:
-                continue
+            try:
+                percentage = each['count'] / total_count
+            except ZeroDivisionError:
+                percentage = 0
 
             suggestions.append({
-                'ptn': pattern['_id']['norm_pattern'],
+                'norm_pattern': each['norm_pattern'],
                 'percent': math.floor(percentage*100),
                 'ngrams': ngram_candidates
             })
