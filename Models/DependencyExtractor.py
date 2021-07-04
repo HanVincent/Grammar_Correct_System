@@ -12,7 +12,7 @@ class DependencyExtractor:
     def process(self, token):
         if self.verb_pattern_extractor.is_processable(token.tag_):
             try:
-                pattern, ngram = self.verb_pattern_extractor.extract_pattern(
+                pattern, ngram, indices = self.verb_pattern_extractor.extract_pattern(
                     token)
                 norm_pattern = self.verb_pattern_extractor.normalize(pattern)
 
@@ -20,7 +20,8 @@ class DependencyExtractor:
                 info = {
                     'norm_pattern': norm_pattern,
                     'pattern': pattern,
-                    'ngram': ngram
+                    'ngram': ngram,
+                    'indices': indices
                 }
 
                 return info

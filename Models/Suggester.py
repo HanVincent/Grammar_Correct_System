@@ -14,10 +14,10 @@ class Suggester:
                                                                     pattern['_id']['norm_pattern'].split(' ')))
         return similar_patterns[:k]
 
-    def _suggest_ngrams(self, ngram_tks, ngram_candidates, k=3):
-        similar_ngrams = sorted(
-            ngram_candidates, key=lambda ng: edit_distance(ngram_tks, ng.split(' ')))
-        return similar_ngrams[:k]
+    def _suggest_ngrams(self, ngram_tks, pair_candidates, k=3):
+        similar_pairs = sorted(
+            pair_candidates, key=lambda pair: edit_distance(ngram_tks, pair[0].split(' ')))
+        return similar_pairs[:k]
 
     def _edit_ngram(self):
         pass
@@ -40,9 +40,9 @@ class Suggester:
         ngram_tks = query['ngram'].split(' ')
         for each in top_k_patterns:
             ngram_key = f'{query["key"]}|{each["norm_pattern"]}'
-            ngrams = [doc['ngram'].split(
-                '|')[0] for doc in self.mongodb_client.get_ngrams(ngram_key)]
-            ngram_candidates = self._suggest_ngrams(ngram_tks, ngrams)
+            ngrams = [(doc['ngram'].split('|')[0], doc['sent'])
+                      for doc in self.mongodb_client.get_ngrams(ngram_key)]
+            ngram_sggs = self._suggest_ngrams(ngram_tks, ngrams)
 
             try:
                 percentage = each['count'] / total_count
@@ -52,6 +52,6 @@ class Suggester:
             suggestions.append({
                 'norm_pattern': each['norm_pattern'],
                 'percent': math.floor(percentage*100),
-                'ngrams': ngram_candidates
+                'ngrams': ngram_sggs
             })
         return suggestions

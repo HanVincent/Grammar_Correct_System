@@ -32,29 +32,33 @@ class VerbPatternExtractor(PatternExtractor):
 
         tokens = [head_word] + first_layer + second_layer
         tokens.sort(key=lambda tk: tk.i)
-        
+
         ngram = [tk.text for tk in tokens]
+        indices = set([tk.i for tk in tokens])
         pattern = [self._map_to_general(tk) for tk in tokens]
         if None in pattern or len(pattern) < 2:
             raise ValueError("Invalid pattern:", pattern)
 
-        return (' '.join(pattern), ' '.join(ngram))
+        return (' '.join(pattern), ' '.join(ngram), indices)
+
+    def _stem_pattern(self, pattern, target):
+        return target + pattern.split(target, 1)[1]
 
     # normalize verb pattern
     def normalize(self, pattern, max_length=4):
         if 'be V-ed' in pattern:
-            norm_pattern = 'be V-ed' + pattern.split('be V-ed')[1]
+            norm_pattern = self._stem_pattern(pattern, 'be V-ed')
         elif 'have V-ed' in pattern:
-            norm_pattern = 'have V-ed' + pattern.split('have V-ed')[1]
+            norm_pattern = self._stem_pattern(pattern, 'have V-ed')
         elif 'be V-ing' in pattern:
-            norm_pattern = 'be V-ing' + pattern.split('be V-ing')[1]
+            norm_pattern = self._stem_pattern(pattern, 'be V-ing')
         elif 'be' in pattern:
-            norm_pattern = 'be' + pattern.split('be')[1]
+            norm_pattern = self._stem_pattern(pattern, 'be')
         elif 'V' in pattern:
-            norm_pattern = 'V' + pattern.split('V')[1]
+            norm_pattern = self._stem_pattern(pattern, 'V')
             norm_pattern = norm_pattern.replace(
                 'V-ing', 'V').replace('V-ed', 'V')
-        else: 
+        else:
             raise ValueError("Pattern not containing 'V' ", pattern)
 
         # ptn = ptn.replace('wh-cl', 'O').replace('cl', 'O') # cl / wh-cl -> O

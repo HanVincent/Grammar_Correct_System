@@ -1,4 +1,4 @@
-from Models.Constant import POS, DEP, RESERVED_WORDS, WH_WORDS
+from Models.Constant import POS, DEP, WH_WORDS
 
 
 class PatternExtractor():

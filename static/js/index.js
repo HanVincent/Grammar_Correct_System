@@ -28,7 +28,7 @@ $(document).ready(() => {
     const contentBlock = $('#content-block');
     const editBlock = $('#edit-block');
     const headline = $('#headline');
-    const sugTable = $('#sug-table');
+    const sugBlock = $('#sug-block');
 
     const editMode = $('.edit-mode');
     $('#btn-correct').click(((e) => {
@@ -59,6 +59,7 @@ $(document).ready(() => {
     const wrongPtn = /(\[-(.*?)\/\/(.*?)-\])/gm;
 
     function showEdit(edit) {
+        headline.text('Click the word you want to check.');
         edit = edit
             .replace(rightPtn, "<target class='text-success' data-id='$3'>$2</target>")
             .replace(wrongPtn, "<target class='text-danger' data-id='$3'>$2</target>")
@@ -70,11 +71,11 @@ $(document).ready(() => {
     editBlock.click((e) => {
         const id = e.target.dataset.id;
         if (id === undefined) return;
-        else if (prevId === id) return;
-        else prevId = id;
+        // else if (prevId === id) return;
+        prevId = id;
 
         const [token, dep] = meta[id].key.split('|');
-        headline.text(`${token} | ${meta[id].norm_pattern} | ${meta[id].ngram}`);
+        headline.text(`${token} - ${meta[id].norm_pattern} (${meta[id].ngram})`);
         request("/suggest", meta[id]).done(showSuggestions);
     });
 
@@ -85,12 +86,13 @@ $(document).ready(() => {
 
         const suggestsList = suggests.reduce((prev, curr) => {
             const { norm_pattern, percent, ngrams } = curr;
-            return prev + `
-            <tr>
-                <th scope="row" rowspan=${ngrams.length}>${norm_pattern} (${percent}%)</th>
-                <td>${ngrams[0]}</td>
-            </tr>` + ngrams.slice(1).reduce((pre, ngram) => pre + `<tr><td>${ngram}</td></tr>`, '');
-        }, '')
-        sugTable.html(suggestsList);
+            return prev + `<div>${norm_pattern} (${percent}%)</div>` +
+                `<ul>
+                    ${ngrams.reduce((pre, ngram) => pre + `<li data-toggle="tooltip" data-placement="left" title="${ngram[0]}">${ngram[1]}</li>`, '')}
+                </ul>`;
+        }, '');
+        sugBlock.html(suggestsList);
+
+        $('[data-toggle="tooltip"]').tooltip();
     }
 })
